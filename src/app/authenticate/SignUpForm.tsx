@@ -10,6 +10,8 @@ import { Button } from "../../components/ui/button";
 import { signUp } from "./auth.action";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { Loader2 } from "lucide-react";
 
 
 export const signUpSchema = z.object({
@@ -17,7 +19,7 @@ export const signUpSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
   confirmPassword: z.string().min(8),
-}).refine(({ password, confirmPassword }) => password === confirmPassword, {
+}).refine(({ password, confirmPassword }) => password !== confirmPassword, {
   message: "Password do not match",
   path: ['confirmPassword']
 })
@@ -25,6 +27,7 @@ type Props = {}
 
 const SignUpForm = (props: Props) => {
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
   const form = useForm<z.infer<typeof signUpSchema>>({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
@@ -36,16 +39,17 @@ const SignUpForm = (props: Props) => {
   })
 
   async function onSubmit(values: z.infer<typeof signUpSchema>) {
-    
+    setLoading(() => true)
 
     const response = await signUp(values);
-    
+
     if (!response.success) {
       toast.error(response.error)
       return;
     }
     toast.success('Account created!')
     router.push('/dashboard')
+    setLoading(() => false)
   }
   return (
     <Card>
@@ -126,7 +130,10 @@ const SignUpForm = (props: Props) => {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="self-start"> Submit </Button>
+            <Button type="submit" className="self-start">
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Submit
+            </Button>
 
           </form>
         </Form>
